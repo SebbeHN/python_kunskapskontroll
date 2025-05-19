@@ -1,0 +1,44 @@
+# Virtuella miljöer
+.venv/
+*/.venv/
+
+# Python-cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code-inställningar
+.vscode/
+
+# OS-specifika filer
+.DS_Store
+Thumbs.db
+
+# Loggar och temporära filer
+*.log
+
+# Jupyter Notebooks checkpoints (om du använder .ipynb-filer)
+.ipynb_checkpoints/
+
+# Test- och coverage-filer
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# Mypy och linting
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Pipenv och Poetry
+Pipfile.lock
+poetry.lock
+
+# Installerade distributionsfiler
+dist/
+build/
+*.egg-info/
