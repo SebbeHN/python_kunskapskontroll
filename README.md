@@ -22,15 +22,16 @@ Contents:
 
 An interactive Streamlit application has also been developed to present the most important findings in a user-friendly way.
 📂 Project Structure
+
 python_kunskapskontroll/
-├── teori_del_01/           # Theoretical questions & exercises
-│   ├── theoretical_questions.ipynb
-│   └── .venv/
-├── diamonds_analys/          # Data analysis & Streamlit app
-│   ├── diamonds_analysis.ipynb
-│   ├── diamonds.csv
-│   ├── streamlit_app.py
-│   └── .venv/
+├── teori_del_01/ # Theoretical questions & exercises
+│ ├── theoretical_questions.ipynb
+│ └── .venv/
+├── diamonds_analys/ # Data analysis & Streamlit app
+│ ├── diamonds_analysis.ipynb
+│ ├── diamonds.csv
+│ ├── streamlit_app.py
+│ └── .venv/
 ├── .gitignore
 └── README.md
 
