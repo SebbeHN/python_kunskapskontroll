@@ -1,6 +1,6 @@
-# 📚 Python Knowledge Assessment – NBI
+# 📚 Python Knowledge Assessment 
 
-This repository contains the submission for the Python Knowledge Assessment as part of the NBI program. The project consists of two main parts:
+This repository contains the submission for the Python Knowledge Assessment as part of the NBI program that i am studying. The project consists of two main parts:
 
 ---
 
