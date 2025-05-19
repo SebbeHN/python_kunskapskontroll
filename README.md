@@ -36,6 +36,7 @@ python_kunskapskontroll/
 └── README.md
 
 📈 Running the Streamlit Application
+
 Navigate to the `diamonds_analys` folder and run the following command:
 
 cd diamonds_analys
