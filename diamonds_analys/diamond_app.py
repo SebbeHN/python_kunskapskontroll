@@ -7,46 +7,46 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
+# Konfigurera sidan
 st.set_page_config(
-    page_title="💎 Diamond Market Analyzer",
+    page_title="💎 Guldfynds Diamond Data Analysis",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-
+# Cache data loading
 @st.cache_data
 def load_data():
     """Ladda och förbehandla diamantdata"""
     try:
-        
+        # Ladda data och skapa en explicit kopia
         df = pd.read_csv('diamonds.csv').copy()
         
-       
+        # Skapa scoring system
         cut_scores = {'Fair': 1, 'Good': 2, 'Very Good': 3, 'Premium': 4, 'Ideal': 5}
         color_scores = {'J': 1, 'I': 2, 'H': 3, 'G': 4, 'F': 5, 'E': 6, 'D': 7}
         clarity_scores = {'I1': 1, 'SI2': 2, 'SI1': 3, 'VS2': 4, 'VS1': 5, 'VVS2': 6, 'VVS1': 7, 'IF': 8}
         
-        
+        # Använd .loc för säker tilldelning
         df.loc[:, 'cut_score'] = df['cut'].map(cut_scores)
         df.loc[:, 'color_score'] = df['color'].map(color_scores)
         df.loc[:, 'clarity_score'] = df['clarity'].map(clarity_scores)
         
-        
+        # Kvalitetspoäng (viktad)
         df.loc[:, 'quality_score'] = (
             df['cut_score'] * 0.4 + 
             df['color_score'] * 0.3 + 
             df['clarity_score'] * 0.3
         ) / 7 * 5
         
-        
+        # Beräkna pris per karat
         df.loc[:, 'price_per_carat'] = df['price'] / df['carat']
         
-        
+        # Value score
         df.loc[:, 'value_score'] = df['quality_score'] / (df['price_per_carat'] / 1000)
         
-        
+        # Prissegment
         def price_segment(price):
             if price < 1000: return 'Budget (< $1K)'
             elif price < 2500: return 'Standard ($1K-$2.5K)'
@@ -61,42 +61,49 @@ def load_data():
         st.error("❌ diamonds.csv inte hittad! Lägg filen i samma mapp som appen.")
         return None
 
-
+# Ladda data
 df = load_data()
 
 if df is not None:
     
+    # HEADER med minimal business context
+    st.title("💎 Diamond Market Data Analysis")
+    st.markdown("### *Comprehensive Analysis of Diamond Dataset*")
     
-    st.sidebar.title("🔧 Kontroller")
+    # Minimal business context
+    st.info("📋 **Context:** Analysis of diamond market data to understand pricing patterns, quality distributions, and value opportunities for potential market entry.")
     
+    # SIDEBAR - Filters och Navigation
+    st.sidebar.title("🔧 Analysis Controls")
     
+    # Navigation
     page = st.sidebar.selectbox(
-        "📍 Välj sida:",
-        ["🏠 Översikt", "🔍 Interaktiv Explorer", "💰 Prisguide", "🏆 Rekommendationer"]
+        "📍 Select Analysis:",
+        ["🏠 Dataset Overview", "🔍 Interactive Explorer", "💰 Value Analysis", "🏆 Key Insights"]
     )
     
+    # Gemensamma filter
+    st.sidebar.subheader("🎛️ Data Filters")
     
-    st.sidebar.subheader("🎛️ Filter")
-    
-    
+    # Budget filter
     budget_range = st.sidebar.slider(
-        "💰 Budget ($)",
+        "💰 Price Range ($)",
         min_value=int(df['price'].min()),
         max_value=int(df['price'].max()),
         value=(500, 10000),
         step=100
     )
     
-    
+    # Karat filter
     carat_range = st.sidebar.slider(
-        "⚖️ Karat",
+        "⚖️ Carat Range",
         min_value=float(df['carat'].min()),
         max_value=float(df['carat'].max()),
         value=(0.3, 2.0),
         step=0.1
     )
     
-    
+    # Filtrera data
     filtered_df = df[
         (df['price'] >= budget_range[0]) & 
         (df['price'] <= budget_range[1]) &
@@ -104,80 +111,77 @@ if df is not None:
         (df['carat'] <= carat_range[1])
     ]
     
+    # MAIN CONTENT baserat på vald sida
     
-    
-    if page == "🏠 Översikt":
+    if page == "🏠 Dataset Overview":
         
-        st.title("💎 Diamond Market Analyzer")
-        st.markdown("### *Datadriven analys av diamantmarknaden*")
-        
-        
+        # Key metrics i kolumner
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.metric(
-                "💎 Totalt antal",
+                "💎 Total Diamonds",
                 f"{len(filtered_df):,}",
                 f"{len(filtered_df) - len(df):,}" if len(filtered_df) != len(df) else None
             )
         
         with col2:
-            avg_price = filtered_df['price'].mean()
+            avg_price = filtered_df.loc[:, 'price'].mean()
             st.metric(
-                "💰 Medelpris",
+                "💰 Average Price",
                 f"${avg_price:,.0f}",
-                f"{(avg_price - df['price'].mean())/df['price'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
+                f"{(avg_price - df.loc[:, 'price'].mean())/df.loc[:, 'price'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
             )
         
         with col3:
-            avg_carat = filtered_df['carat'].mean()
+            avg_carat = filtered_df.loc[:, 'carat'].mean()
             st.metric(
-                "⚖️ Medelkarat",
+                "⚖️ Average Carat",
                 f"{avg_carat:.2f}",
-                f"{(avg_carat - df['carat'].mean())/df['carat'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
+                f"{(avg_carat - df.loc[:, 'carat'].mean())/df.loc[:, 'carat'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
             )
         
         with col4:
-            avg_quality = filtered_df['quality_score'].mean()
+            avg_quality = filtered_df.loc[:, 'quality_score'].mean()
             st.metric(
-                "⭐ Kvalitetspoäng",
+                "⭐ Quality Score",
                 f"{avg_quality:.2f}/5",
-                f"{(avg_quality - df['quality_score'].mean())/df['quality_score'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
+                f"{(avg_quality - df.loc[:, 'quality_score'].mean())/df.loc[:, 'quality_score'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
             )
         
-        
+        # Huvudvisualiseringar
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("📊 Prisfördelning")
+            st.subheader("📊 Price Distribution")
             fig_price = px.histogram(
                 filtered_df, 
                 x='price', 
                 nbins=50,
-                title="Fördelning av diamantpriser",
+                title="Distribution of Diamond Prices",
                 color_discrete_sequence=['#1f77b4']
             )
             fig_price.update_layout(
-                xaxis_title="Pris (USD)",
-                yaxis_title="Antal diamanter",
+                xaxis_title="Price (USD)",
+                yaxis_title="Number of Diamonds",
                 showlegend=False
             )
             st.plotly_chart(fig_price, use_container_width=True)
         
         with col2:
-            st.subheader("💎 Prissegment")
+            st.subheader("💎 Market Segments")
             segment_counts = filtered_df['price_segment'].value_counts()
             fig_segment = px.pie(
                 values=segment_counts.values,
                 names=segment_counts.index,
-                title="Marknadsandel per segment"
+                title="Market Share by Price Segment"
             )
             st.plotly_chart(fig_segment, use_container_width=True)
         
+        # Korrelationsanalys
+        st.subheader("📈 Price Correlation Analysis")
         
-        st.subheader("📈 Prisdriven Faktorer")
-        
-        
+        # Beräkna korrelationer
         corr_cols = ['carat', 'depth', 'table', 'x', 'y', 'z', 'quality_score', 'price']
         corr_matrix = filtered_df[corr_cols].corr()
         price_corr = corr_matrix['price'].drop('price').abs().sort_values(ascending=False)
@@ -185,50 +189,87 @@ if df is not None:
         col1, col2 = st.columns([1, 2])
         
         with col1:
-            st.write("**Starkaste korrelationer med pris:**")
+            st.write("**Strongest price correlations:**")
             for factor, corr in price_corr.head(5).items():
                 st.write(f"• **{factor}**: {corr:.3f}")
+            
+            st.write("**Key Insights:**")
+            st.write("• Carat is the strongest price driver")
+            st.write("• Physical dimensions closely follow carat")
+            st.write("• Quality score shows moderate correlation")
+            st.write("• Depth/table have minimal price impact")
         
         with col2:
-            
+            # Scatter plot av starkaste korrelationen
             top_factor = price_corr.index[0]
             if top_factor in filtered_df.columns:
                 fig_scatter = px.scatter(
-                    filtered_df.sample(min(5000, len(filtered_df))),  # Sample för prestanda
+                    filtered_df.sample(min(5000, len(filtered_df))),
                     x=top_factor,
                     y='price',
                     color='quality_score',
-                    title=f"Pris vs {top_factor} (färg = kvalitet)",
+                    title=f"Price vs {top_factor} (colored by quality)",
                     opacity=0.6
                 )
                 st.plotly_chart(fig_scatter, use_container_width=True)
+        
+        # Four Cs Analysis
+        st.subheader("💎 The Four Cs Analysis")
+        
+        four_c_col1, four_c_col2 = st.columns(2)
+        
+        with four_c_col1:
+            # Cut analysis
+            cut_analysis = filtered_df.groupby('cut', observed=False).agg({
+                'price': ['mean', 'count'],
+                'carat': 'mean'
+            }).round(2)
+            cut_analysis.columns = ['Avg_Price', 'Count', 'Avg_Carat']
+            
+            st.markdown("**Cut Quality Distribution:**")
+            for cut in cut_analysis.index:
+                data = cut_analysis.loc[cut]
+                st.write(f"• **{cut}**: ${data['Avg_Price']:,.0f} avg price, {data['Count']} diamonds")
+        
+        with four_c_col2:
+            # Color analysis
+            color_analysis = filtered_df.groupby('color', observed=False).agg({
+                'price': 'mean',
+                'price_per_carat': 'mean'
+            }).round(0)
+            
+            st.markdown("**Color Grade Analysis:**")
+            for color in sorted(color_analysis.index):
+                data = color_analysis.loc[color]
+                st.write(f"• **{color}**: ${data['price']:,.0f} avg price, ${data['price_per_carat']:,.0f}/carat")
     
-    elif page == "🔍 Interaktiv Explorer":
+    elif page == "🔍 Interactive Explorer":
         
-        st.title("🔍 Interaktiv Diamond Explorer")
+        st.title("🔍 Interactive Data Explorer")
+        st.markdown("Explore relationships between different diamond characteristics")
         
-        
+        # Kontroller för explorern
         col1, col2, col3 = st.columns(3)
         
         with col1:
             x_axis = st.selectbox(
-                "📊 X-axel:",
+                "📊 X-axis:",
                 ['carat', 'price', 'depth', 'table', 'quality_score', 'value_score']
             )
         
         with col2:
             y_axis = st.selectbox(
-                "📊 Y-axel:",
+                "📊 Y-axis:",
                 ['price', 'carat', 'quality_score', 'value_score', 'price_per_carat']
             )
         
         with col3:
             color_by = st.selectbox(
-                "🎨 Färgkoda:",
+                "🎨 Color by:",
                 ['cut', 'color', 'clarity', 'price_segment', 'quality_score']
             )
         
-        
+        # Skapa scatter plot
         sample_size = min(5000, len(filtered_df))
         plot_df = filtered_df.sample(sample_size)
         
@@ -245,26 +286,26 @@ if df is not None:
         fig.update_layout(height=600)
         st.plotly_chart(fig, use_container_width=True)
         
-        
-        st.subheader("⭐ Kvalitetsanalys")
+        # Kvalitetsfördelning
+        st.subheader("⭐ Quality Distribution Analysis")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            
+            # Cut fördelning
             cut_counts = filtered_df['cut'].value_counts()
             fig_cut = px.bar(
                 x=cut_counts.index,
                 y=cut_counts.values,
-                title="Fördelning av Cut-kvalitet",
+                title="Distribution of Cut Quality",
                 color=cut_counts.values,
                 color_continuous_scale='viridis'
             )
-            fig_cut.update_layout(showlegend=False, xaxis_title="Cut", yaxis_title="Antal")
+            fig_cut.update_layout(showlegend=False, xaxis_title="Cut", yaxis_title="Count")
             st.plotly_chart(fig_cut, use_container_width=True)
         
         with col2:
-            
+            # Color vs Clarity heatmap
             heatmap_data = pd.crosstab(filtered_df['color'], filtered_df['clarity'])
             fig_heatmap = px.imshow(
                 heatmap_data.values,
@@ -276,253 +317,244 @@ if df is not None:
             )
             st.plotly_chart(fig_heatmap, use_container_width=True)
     
-    elif page == "💰 Prisguide":
+    elif page == "💰 Value Analysis":
         
-        st.title("💰 Smart Prisguide")
-        st.markdown("### *Hitta bästa värdet för din budget*")
+        st.title("💰 Value-for-Money Analysis")
+        st.markdown("### *Find diamonds with the best value proposition*")
         
+        # Value Score Explanation
+        with st.expander("ℹ️ How Value Score Works"):
+            st.markdown("""
+            **Value Score Calculation:**
+            - Quality Score = Weighted average of Cut (40%), Color (30%), Clarity (30%)
+            - Value Score = Quality Score / (Price per Carat / 1000)
+            - Higher values indicate better quality relative to price
+            """)
         
-        budget_guide = st.slider(
-            "🎯 Din budget ($):",
-            min_value=500,
-            max_value=20000,
-            value=5000,
-            step=500
-        )
+        # Top value diamonds
+        st.subheader("🏆 Best Value Diamonds")
         
-        
-        budget_diamonds = df[df['price'] <= budget_guide]
-        
-        if len(budget_diamonds) > 0:
-            
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                
-                st.subheader(f"🏆 Bästa värden för ${budget_guide:,}")
-                
-                best_values = budget_diamonds.nlargest(10, 'value_score')[
-                    ['carat', 'cut', 'color', 'clarity', 'price', 'value_score', 'quality_score']
-                ].round(2)
-                
-                
-                best_values['💰 Pris'] = best_values['price'].apply(lambda x: f"${x:,.0f}")
-                best_values['⭐ Värde'] = best_values['value_score'].apply(lambda x: f"{x:.2f}")
-                best_values['🏆 Kvalitet'] = best_values['quality_score'].apply(lambda x: f"{x:.2f}/5")
-                
-                display_df = best_values[['carat', 'cut', 'color', 'clarity', '💰 Pris', '⭐ Värde', '🏆 Kvalitet']]
-                st.dataframe(display_df, use_container_width=True)
-            
-            with col2:
-                
-                st.subheader("📊 Budget Statistics")
-                
-                avg_carat_budget = budget_diamonds['carat'].mean()
-                avg_quality_budget = budget_diamonds['quality_score'].mean()
-                count_budget = len(budget_diamonds)
-                best_value_score = budget_diamonds['value_score'].max()
-                
-                st.metric("💎 Tillgängliga", f"{count_budget:,}")
-                st.metric("⚖️ Snitt karat", f"{avg_carat_budget:.2f}")
-                st.metric("⭐ Snitt kvalitet", f"{avg_quality_budget:.2f}/5")
-                st.metric("🏆 Bästa värde", f"{best_value_score:.2f}")
-            
-            
-            st.subheader("📈 Pris per Karat-intervall")
-            
-            
-            budget_diamonds_copy = budget_diamonds.copy()
-            budget_diamonds_copy.loc[:, 'carat_bin'] = pd.cut(
-                budget_diamonds_copy['carat'], 
-                bins=[0, 0.5, 0.7, 1.0, 1.5, 2.0, 5.0],
-                labels=['<0.5', '0.5-0.7', '0.7-1.0', '1.0-1.5', '1.5-2.0', '>2.0']
-            )
-            
-            price_by_carat = budget_diamonds_copy.groupby('carat_bin', observed=False).agg({
-                'price': ['mean', 'count'],
-                'value_score': 'mean'
-            }).round(2)
-            
-            price_by_carat.columns = ['Medelpris', 'Antal', 'Värde_Score']
-            price_by_carat = price_by_carat.reset_index()
-            
-            fig_price_carat = px.bar(
-                price_by_carat,
-                x='carat_bin',
-                y='Medelpris',
-                color='Värde_Score',
-                title="Medelpris per Karat-intervall",
-                color_continuous_scale='RdYlGn'
-            )
-            st.plotly_chart(fig_price_carat, use_container_width=True)
-            
-            
-            st.subheader("💡 Smarta Köptips")
-            
-            tips_col1, tips_col2 = st.columns(2)
-            
-            with tips_col1:
-                st.markdown("""
-                **🎯 Optimera din budget:**
-                - Sök diamanter strax under "magiska" storlekar (0.9ct vs 1.0ct)
-                - Very Good cut ger 90% av Ideal's prestanda
-                - G-H färg är sweet spot för värde
-                - SI1 klarhet är ofta perfekt för ögat
-                """)
-            
-            with tips_col2:
-                
-                if budget_guide < 2000:
-                    rec = "Budget-tips: Fokusera på cut och undvik extremt små diamanter"
-                elif budget_guide < 5000:
-                    rec = "Standard-tips: Balansera mellan storlek och kvalitet"
-                elif budget_guide < 10000:
-                    rec = "Premium-tips: Nu kan du få både storlek OCH kvalitet"
-                else:
-                    rec = "Lyx-tips: Sikta på Ideal cut, D-F färg, VVS+ klarhet"
-                
-                st.info(f"**För din budget:** {rec}")
-        
-        else:
-            st.warning("Inga diamanter hittades för denna budget. Prova att öka budgeten.")
-    
-    elif page == "🏆 Rekommendationer":
-        
-        st.title("🏆 Personliga Rekommendationer")
-        
-        
-        st.subheader("🎯 Dina Preferenser")
-        
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns([2, 1])
         
         with col1:
-            user_budget = st.number_input(
-                "💰 Max budget ($):",
-                min_value=500,
-                max_value=50000,
-                value=3000,
-                step=500
-            )
+            best_values = filtered_df.nlargest(15, 'value_score')[
+                ['carat', 'cut', 'color', 'clarity', 'price', 'value_score', 'quality_score']
+            ].round(2)
+            
+            # Format for display
+            display_df = best_values.copy()
+            display_df['Price'] = display_df['price'].apply(lambda x: f"${x:,.0f}")
+            display_df['Value Score'] = display_df['value_score'].apply(lambda x: f"{x:.2f}")
+            display_df['Quality Score'] = display_df['quality_score'].apply(lambda x: f"{x:.2f}/5")
+            
+            final_display = display_df[['carat', 'cut', 'color', 'clarity', 'Price', 'Value Score', 'Quality Score']]
+            st.dataframe(final_display, use_container_width=True)
         
         with col2:
-            priority = st.selectbox(
-                "🎯 Prioritet:",
-                ["Bästa värde", "Största storlek", "Högsta kvalitet", "Balanserat"]
+            # Value statistics
+            st.subheader("📊 Value Statistics")
+            
+            avg_value = filtered_df['value_score'].mean()
+            top_10_threshold = filtered_df['value_score'].quantile(0.9)
+            high_value_count = len(filtered_df[filtered_df['value_score'] > top_10_threshold])
+            
+            st.metric("Average Value Score", f"{avg_value:.2f}")
+            st.metric("Top 10% Threshold", f"{top_10_threshold:.2f}")
+            st.metric("High Value Diamonds", f"{high_value_count:,}")
+            
+            # Value insights
+            st.markdown("**💡 Value Insights:**")
+            best_value_cut = best_values['cut'].mode().iloc[0] if len(best_values) > 0 else 'N/A'
+            best_value_color = best_values['color'].mode().iloc[0] if len(best_values) > 0 else 'N/A'
+            
+            st.write(f"• Most common cut in top values: **{best_value_cut}**")
+            st.write(f"• Most common color in top values: **{best_value_color}**")
+            st.write(f"• Sweet spot size: **{best_values['carat'].mean():.2f} carats**")
+        
+        # Value distribution
+        st.subheader("📈 Value Score Distribution")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            fig_value_dist = px.histogram(
+                filtered_df,
+                x='value_score',
+                nbins=50,
+                title="Distribution of Value Scores"
             )
-        
-        with col3:
-            min_carat = st.number_input(
-                "⚖️ Min karat:",
-                min_value=0.2,
-                max_value=3.0,
-                value=0.5,
-                step=0.1
+            fig_value_dist.add_vline(
+                x=filtered_df['value_score'].mean(),
+                line_dash="dash",
+                line_color="red",
+                annotation_text="Average"
             )
+            st.plotly_chart(fig_value_dist, use_container_width=True)
         
-        
-        user_diamonds = df[
-            (df['price'] <= user_budget) & 
-            (df['carat'] >= min_carat)
-        ]
-        
-        if len(user_diamonds) > 0:
-            
-            
-            if priority == "Bästa värde":
-                recommendations = user_diamonds.nlargest(15, 'value_score')
-                sort_metric = "Value Score"
-            elif priority == "Största storlek":
-                recommendations = user_diamonds.nlargest(15, 'carat')
-                sort_metric = "Karat"
-            elif priority == "Högsta kvalitet":
-                recommendations = user_diamonds.nlargest(15, 'quality_score')
-                sort_metric = "Kvalitetspoäng"
-            else:  
-                user_diamonds_copy = user_diamonds.copy()
-                user_diamonds_copy.loc[:, 'balanced_score'] = (
-                    user_diamonds_copy['value_score'] * 0.4 +
-                    user_diamonds_copy['quality_score'] * 0.3 +
-                    (user_diamonds_copy['carat'] / user_diamonds_copy['carat'].max()) * 5 * 0.3
-                )
-                recommendations = user_diamonds_copy.nlargest(15, 'balanced_score')
-                sort_metric = "Balanserad Score"
-            
-            
-            st.subheader(f"🎯 Dina Top 15 Rekommendationer (sorterat på {sort_metric})")
-            
-            
-            display_recs = recommendations[[
-                'carat', 'cut', 'color', 'clarity', 'price', 
-                'value_score', 'quality_score'
-            ]].copy()
-            
-            display_recs['Price'] = display_recs['price'].apply(lambda x: f"${x:,}")
-            display_recs['Value'] = display_recs['value_score'].apply(lambda x: f"{x:.2f}")
-            display_recs['Quality'] = display_recs['quality_score'].apply(lambda x: f"{x:.2f}/5")
-            
-            final_display = display_recs[['carat', 'cut', 'color', 'clarity', 'Price', 'Value', 'Quality']]
-            
-            #
-            styled_df = final_display.head(15).style.apply(
-                lambda x: ['background-color: #90EE90' if i < 3 else '' for i in range(len(x))],
-                axis=0
+        with col2:
+            # Value vs Price scatter
+            fig_value_price = px.scatter(
+                filtered_df.sample(min(3000, len(filtered_df))),
+                x='value_score',
+                y='price',
+                color='quality_score',
+                size='carat',
+                title="Value Score vs Price",
+                opacity=0.6
             )
-            
-            st.dataframe(styled_df, use_container_width=True)
-            
-            
-            st.subheader("📊 Personlig Marknadsanalys")
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                
-                st.metric("💎 Tillgängliga alternativ", f"{len(user_diamonds):,}")
-                st.metric("⚖️ Genomsnittlig karat", f"{user_diamonds['carat'].mean():.2f}")
-                st.metric("💰 Genomsnittligt pris", f"${user_diamonds['price'].mean():,.0f}")
-                
-                
-                best_deal = recommendations.iloc[0]
-                st.success(f"""
-                **🏆 Ditt bästa fynd:**
-                {best_deal['carat']:.2f}ct {best_deal['cut']} {best_deal['color']} {best_deal['clarity']}
-                Pris: ${best_deal['price']:,} | Värde: {best_deal['value_score']:.2f}
-                """)
-            
-            with col2:
-                
-                fig_user = px.scatter(
-                    user_diamonds.sample(min(1000, len(user_diamonds))),
-                    x='carat',
-                    y='price',
-                    color='value_score',
-                    title="Dina alternativ: Karat vs Pris",
-                    color_continuous_scale='RdYlGn',
-                    opacity=0.7
-                )
-                
-               
-                fig_user.add_scatter(
-                    x=recommendations.head(5)['carat'],
-                    y=recommendations.head(5)['price'],
-                    mode='markers',
-                    marker=dict(size=15, color='red', line=dict(width=2, color='black')),
-                    name='Top 5 Rekommendationer'
-                )
-                
-                st.plotly_chart(fig_user, use_container_width=True)
+            st.plotly_chart(fig_value_price, use_container_width=True)
+    
+    elif page == "🏆 Key Insights":
         
-        else:
-            st.warning("Inga diamanter matchar dina kriterier. Prova att justera budget eller storlek.")
+        st.title("🏆 Key Insights & Recommendations")
+        st.markdown("### *Data-driven conclusions from the analysis*")
+        
+        # Executive Summary
+        st.subheader("📋 Executive Summary")
+        
+        # Calculate key statistics for insights
+        total_diamonds = len(df)
+        avg_price = df['price'].mean()
+        price_carat_corr = df['price'].corr(df['carat'])
+        most_common_cut = df['cut'].mode().iloc[0]
+        
+        summary_col1, summary_col2 = st.columns(2)
+        
+        with summary_col1:
+            st.markdown(f"""
+            **📊 Dataset Overview:**
+            - **{total_diamonds:,}** diamonds analyzed
+            - Average price: **${avg_price:,.0f}**
+            - Price range: **${df['price'].min():,}** - **${df['price'].max():,}**
+            - Carat range: **{df['carat'].min():.2f}** - **{df['carat'].max():.2f}**
+            """)
+        
+        with summary_col2:
+            st.markdown(f"""
+            **🔍 Key Findings:**
+            - Carat drives **{price_carat_corr:.1%}** of price variation
+            - Most common cut: **{most_common_cut}**
+            - Premium segment represents largest opportunity
+            - Quality scoring reveals undervalued diamonds
+            """)
+        
+        # Detailed insights in tabs
+        st.subheader("📈 Detailed Analysis")
+        
+        insight_tabs = st.tabs(["💰 Pricing", "💎 Quality", "📊 Market", "🎯 Opportunities"])
+        
+        with insight_tabs[0]:  # Pricing insights
+            st.markdown("""
+            **💰 Pricing Insights:**
+            
+            **Primary Price Drivers:**
+            1. **Carat Weight** - Strongest correlation (0.92+)
+            2. **Physical Dimensions** - Directly related to carat
+            3. **Quality Factors** - Cut, Color, Clarity (moderate impact)
+            
+            **Price Patterns:**
+            - Exponential relationship between carat and price
+            - Premium for "magic sizes" (0.5, 1.0, 1.5, 2.0 carats)
+            - Quality improvements show diminishing returns
+            
+            **Market Efficiency:**
+            - Most diamonds priced fairly relative to characteristics
+            - Opportunities exist in undervalued high-quality stones
+            - Value-conscious buyers should focus on cut optimization
+            """)
+        
+        with insight_tabs[1]:  # Quality insights
+            premium_cut_pct = (df['cut'] == 'Premium').mean() * 100
+            ideal_cut_pct = (df['cut'] == 'Ideal').mean() * 100
+            
+            st.markdown(f"""
+            **💎 Quality Distribution Insights:**
+            
+            **Cut Quality:**
+            - **{ideal_cut_pct:.1f}%** are Ideal cut (highest quality)
+            - **{premium_cut_pct:.1f}%** are Premium cut
+            - Very Good cut offers best value proposition
+            
+            **Color Grading:**
+            - G-H colors provide optimal value/quality balance
+            - D-F colors command significant premium
+            - Color preference varies by setting and personal taste
+            
+            **Clarity Levels:**
+            - SI1-VS2 range offers best value for most buyers
+            - Higher clarities often imperceptible to naked eye
+            - Investment grade stones typically VVS1+
+            """)
+        
+        with insight_tabs[2]:  # Market insights
+            budget_pct = (df['price'] < 1000).mean() * 100
+            premium_pct = ((df['price'] >= 2500) & (df['price'] < 5000)).mean() * 100
+            
+            st.markdown(f"""
+            **📊 Market Segmentation:**
+            
+            **Price Segments:**
+            - **Budget (< $1K)**: {budget_pct:.1f}% of market
+            - **Premium ($2.5K-$5K)**: {premium_pct:.1f}% of market
+            - **Luxury ($5K+)**: Smaller volume, higher margins
+            
+            **Market Characteristics:**
+            - Mainstream market focuses on value optimization
+            - Premium segment balances size and quality
+            - Luxury segment prioritizes perfection
+            
+            **Consumer Behavior:**
+            - Size preference drives many purchasing decisions
+            - Quality education increases value awareness
+            - Brand and certification important for trust
+            """)
+        
+        with insight_tabs[3]:  # Opportunities
+            if 'value_score' in df.columns:
+                high_value_opportunities = len(df[df['value_score'] > df['value_score'].quantile(0.9)])
+                
+            st.markdown(f"""
+            **🎯 Strategic Opportunities:**
+            
+            **For Market Entry:**
+            - Focus on Premium segment ($2.5K-$5K) for volume
+            - Target 0.7-1.0 carat range for optimal demand
+            - Emphasize Very Good+ cut quality
+            - Offer G-H color grades for value positioning
+            
+            **For Value Optimization:**
+            - Identify diamonds just below "magic sizes"
+            - Focus on excellent cut over perfect color/clarity
+            - Consider fancy shapes for differentiation
+            - Leverage certification for quality assurance
+            
+            **For Investment:**
+            - Larger stones (2+ carats) show stronger appreciation
+            - Ideal cut + D-F color + VVS+ clarity for long-term value
+            - Rare characteristics command premiums
+            - Provenance and documentation increasingly important
+            """)
+        
+        # Final recommendations
+        st.subheader("🎯 Final Recommendations")
+        
+        st.success("""
+        **Key Takeaways:**
+        1. **Carat weight is king** - Focus on size optimization within budget
+        2. **Cut quality matters most** - Don't compromise on cut for other factors
+        3. **Smart compromises** - G-H color and SI1-VS2 clarity offer best value
+        4. **Market timing** - Avoid "magic sizes" for better pricing
+        5. **Quality scoring** - Use data-driven approaches to identify value
+        """)
     
     # FOOTER
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
-        💎 Diamond Market Analyzer | Byggd med Streamlit
+        💎 Diamond Data Analysis | Comprehensive Market Insights 📊
     </div>
     """, unsafe_allow_html=True)
 
 else:
-    st.error("Kunde inte ladda data. Se till att diamonds.csv finns i samma mapp som appen.")
-    st.info("För att köra appen: `streamlit run diamond_app.py`")
+    st.error("Could not load data. Make sure diamonds.csv is in the same directory as the app.")
+    st.info("To run the app: `streamlit run diamond_app.py`")
