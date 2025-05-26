@@ -58,7 +58,7 @@ Navigate to the `diamonds_analys` folder and run the following command:
 
 ```
 cd diamonds_analys
-streamlit run streamlit_app.py
+streamlit run diamond_app.py
 ```
 
 
