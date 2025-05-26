@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Konfigurera sidan
+
 st.set_page_config(
     page_title="💎 Diamond Market Analyzer",
     page_icon="💎",
@@ -15,38 +15,38 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cache data loading
+
 @st.cache_data
 def load_data():
     """Ladda och förbehandla diamantdata"""
     try:
-        # Ladda data och skapa en explicit kopia
+        
         df = pd.read_csv('diamonds.csv').copy()
         
-        # Skapa scoring system
+       
         cut_scores = {'Fair': 1, 'Good': 2, 'Very Good': 3, 'Premium': 4, 'Ideal': 5}
         color_scores = {'J': 1, 'I': 2, 'H': 3, 'G': 4, 'F': 5, 'E': 6, 'D': 7}
         clarity_scores = {'I1': 1, 'SI2': 2, 'SI1': 3, 'VS2': 4, 'VS1': 5, 'VVS2': 6, 'VVS1': 7, 'IF': 8}
         
-        # Använd .loc för säker tilldelning
+        
         df.loc[:, 'cut_score'] = df['cut'].map(cut_scores)
         df.loc[:, 'color_score'] = df['color'].map(color_scores)
         df.loc[:, 'clarity_score'] = df['clarity'].map(clarity_scores)
         
-        # Kvalitetspoäng (viktad)
+        
         df.loc[:, 'quality_score'] = (
             df['cut_score'] * 0.4 + 
             df['color_score'] * 0.3 + 
             df['clarity_score'] * 0.3
         ) / 7 * 5
         
-        # Beräkna pris per karat
+        
         df.loc[:, 'price_per_carat'] = df['price'] / df['carat']
         
-        # Value score
+        
         df.loc[:, 'value_score'] = df['quality_score'] / (df['price_per_carat'] / 1000)
         
-        # Prissegment
+        
         def price_segment(price):
             if price < 1000: return 'Budget (< $1K)'
             elif price < 2500: return 'Standard ($1K-$2.5K)'
@@ -61,24 +61,24 @@ def load_data():
         st.error("❌ diamonds.csv inte hittad! Lägg filen i samma mapp som appen.")
         return None
 
-# Ladda data
+
 df = load_data()
 
 if df is not None:
     
-    # SIDEBAR - Filters och Navigation
+    
     st.sidebar.title("🔧 Kontroller")
     
-    # Navigation
+    
     page = st.sidebar.selectbox(
         "📍 Välj sida:",
         ["🏠 Översikt", "🔍 Interaktiv Explorer", "💰 Prisguide", "🏆 Rekommendationer"]
     )
     
-    # Gemensamma filter
+    
     st.sidebar.subheader("🎛️ Filter")
     
-    # Budget filter
+    
     budget_range = st.sidebar.slider(
         "💰 Budget ($)",
         min_value=int(df['price'].min()),
@@ -87,7 +87,7 @@ if df is not None:
         step=100
     )
     
-    # Karat filter
+    
     carat_range = st.sidebar.slider(
         "⚖️ Karat",
         min_value=float(df['carat'].min()),
@@ -96,7 +96,7 @@ if df is not None:
         step=0.1
     )
     
-    # Filtrera data
+    
     filtered_df = df[
         (df['price'] >= budget_range[0]) & 
         (df['price'] <= budget_range[1]) &
@@ -104,14 +104,14 @@ if df is not None:
         (df['carat'] <= carat_range[1])
     ]
     
-    # MAIN CONTENT baserat på vald sida
+    
     
     if page == "🏠 Översikt":
         
         st.title("💎 Diamond Market Analyzer")
         st.markdown("### *Datadriven analys av diamantmarknaden*")
         
-        # Key metrics i kolumner
+        
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -145,7 +145,7 @@ if df is not None:
                 f"{(avg_quality - df['quality_score'].mean())/df['quality_score'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
             )
         
-        # Huvudvisualiseringar
+        
         col1, col2 = st.columns(2)
         
         with col1:
@@ -174,10 +174,10 @@ if df is not None:
             )
             st.plotly_chart(fig_segment, use_container_width=True)
         
-        # Korrelationsanalys
+        
         st.subheader("📈 Prisdriven Faktorer")
         
-        # Beräkna korrelationer
+        
         corr_cols = ['carat', 'depth', 'table', 'x', 'y', 'z', 'quality_score', 'price']
         corr_matrix = filtered_df[corr_cols].corr()
         price_corr = corr_matrix['price'].drop('price').abs().sort_values(ascending=False)
@@ -190,7 +190,7 @@ if df is not None:
                 st.write(f"• **{factor}**: {corr:.3f}")
         
         with col2:
-            # Scatter plot av starkaste korrelationen
+            
             top_factor = price_corr.index[0]
             if top_factor in filtered_df.columns:
                 fig_scatter = px.scatter(
@@ -207,7 +207,7 @@ if df is not None:
         
         st.title("🔍 Interaktiv Diamond Explorer")
         
-        # Kontroller för explorern
+        
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -228,7 +228,7 @@ if df is not None:
                 ['cut', 'color', 'clarity', 'price_segment', 'quality_score']
             )
         
-        # Skapa scatter plot
+        
         sample_size = min(5000, len(filtered_df))
         plot_df = filtered_df.sample(sample_size)
         
@@ -245,13 +245,13 @@ if df is not None:
         fig.update_layout(height=600)
         st.plotly_chart(fig, use_container_width=True)
         
-        # Kvalitetsfördelning
+        
         st.subheader("⭐ Kvalitetsanalys")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Cut fördelning
+            
             cut_counts = filtered_df['cut'].value_counts()
             fig_cut = px.bar(
                 x=cut_counts.index,
@@ -264,7 +264,7 @@ if df is not None:
             st.plotly_chart(fig_cut, use_container_width=True)
         
         with col2:
-            # Color vs Clarity heatmap
+            
             heatmap_data = pd.crosstab(filtered_df['color'], filtered_df['clarity'])
             fig_heatmap = px.imshow(
                 heatmap_data.values,
@@ -281,7 +281,7 @@ if df is not None:
         st.title("💰 Smart Prisguide")
         st.markdown("### *Hitta bästa värdet för din budget*")
         
-        # Budget selector
+        
         budget_guide = st.slider(
             "🎯 Din budget ($):",
             min_value=500,
@@ -290,7 +290,7 @@ if df is not None:
             step=500
         )
         
-        # Filtrera på budget
+        
         budget_diamonds = df[df['price'] <= budget_guide]
         
         if len(budget_diamonds) > 0:
@@ -298,14 +298,14 @@ if df is not None:
             col1, col2 = st.columns([2, 1])
             
             with col1:
-                # Bästa värden för budgeten
+                
                 st.subheader(f"🏆 Bästa värden för ${budget_guide:,}")
                 
                 best_values = budget_diamonds.nlargest(10, 'value_score')[
                     ['carat', 'cut', 'color', 'clarity', 'price', 'value_score', 'quality_score']
                 ].round(2)
                 
-                # Gör tabellen mer visuell
+                
                 best_values['💰 Pris'] = best_values['price'].apply(lambda x: f"${x:,.0f}")
                 best_values['⭐ Värde'] = best_values['value_score'].apply(lambda x: f"{x:.2f}")
                 best_values['🏆 Kvalitet'] = best_values['quality_score'].apply(lambda x: f"{x:.2f}/5")
@@ -314,7 +314,7 @@ if df is not None:
                 st.dataframe(display_df, use_container_width=True)
             
             with col2:
-                # Budget stats
+                
                 st.subheader("📊 Budget Statistics")
                 
                 avg_carat_budget = budget_diamonds['carat'].mean()
@@ -327,10 +327,10 @@ if df is not None:
                 st.metric("⭐ Snitt kvalitet", f"{avg_quality_budget:.2f}/5")
                 st.metric("🏆 Bästa värde", f"{best_value_score:.2f}")
             
-            # Priskomparison per karat-intervall
+            
             st.subheader("📈 Pris per Karat-intervall")
             
-            # Skapa karat-bins
+            
             budget_diamonds_copy = budget_diamonds.copy()
             budget_diamonds_copy.loc[:, 'carat_bin'] = pd.cut(
                 budget_diamonds_copy['carat'], 
@@ -356,7 +356,7 @@ if df is not None:
             )
             st.plotly_chart(fig_price_carat, use_container_width=True)
             
-            # Smarta tips
+            
             st.subheader("💡 Smarta Köptips")
             
             tips_col1, tips_col2 = st.columns(2)
@@ -371,7 +371,7 @@ if df is not None:
                 """)
             
             with tips_col2:
-                # Visa budget-specifika rekommendationer
+                
                 if budget_guide < 2000:
                     rec = "Budget-tips: Fokusera på cut och undvik extremt små diamanter"
                 elif budget_guide < 5000:
@@ -390,7 +390,7 @@ if df is not None:
         
         st.title("🏆 Personliga Rekommendationer")
         
-        # Användarpreferenser
+        
         st.subheader("🎯 Dina Preferenser")
         
         col1, col2, col3 = st.columns(3)
@@ -419,7 +419,7 @@ if df is not None:
                 step=0.1
             )
         
-        # Filtrera baserat på preferenser
+        
         user_diamonds = df[
             (df['price'] <= user_budget) & 
             (df['carat'] >= min_carat)
@@ -427,7 +427,7 @@ if df is not None:
         
         if len(user_diamonds) > 0:
             
-            # Sortera baserat på prioritet
+            
             if priority == "Bästa värde":
                 recommendations = user_diamonds.nlargest(15, 'value_score')
                 sort_metric = "Value Score"
@@ -437,7 +437,7 @@ if df is not None:
             elif priority == "Högsta kvalitet":
                 recommendations = user_diamonds.nlargest(15, 'quality_score')
                 sort_metric = "Kvalitetspoäng"
-            else:  # Balanserat
+            else:  
                 user_diamonds_copy = user_diamonds.copy()
                 user_diamonds_copy.loc[:, 'balanced_score'] = (
                     user_diamonds_copy['value_score'] * 0.4 +
@@ -447,10 +447,10 @@ if df is not None:
                 recommendations = user_diamonds_copy.nlargest(15, 'balanced_score')
                 sort_metric = "Balanserad Score"
             
-            # Visa rekommendationer
+            
             st.subheader(f"🎯 Dina Top 15 Rekommendationer (sorterat på {sort_metric})")
             
-            # Formatera för visning
+            
             display_recs = recommendations[[
                 'carat', 'cut', 'color', 'clarity', 'price', 
                 'value_score', 'quality_score'
@@ -462,7 +462,7 @@ if df is not None:
             
             final_display = display_recs[['carat', 'cut', 'color', 'clarity', 'Price', 'Value', 'Quality']]
             
-            # Highlighta top 3
+            #
             styled_df = final_display.head(15).style.apply(
                 lambda x: ['background-color: #90EE90' if i < 3 else '' for i in range(len(x))],
                 axis=0
@@ -470,18 +470,18 @@ if df is not None:
             
             st.dataframe(styled_df, use_container_width=True)
             
-            # Personlig analys
+            
             st.subheader("📊 Personlig Marknadsanalys")
             
             col1, col2 = st.columns(2)
             
             with col1:
-                # Tillgängliga alternativ
+                
                 st.metric("💎 Tillgängliga alternativ", f"{len(user_diamonds):,}")
                 st.metric("⚖️ Genomsnittlig karat", f"{user_diamonds['carat'].mean():.2f}")
                 st.metric("💰 Genomsnittligt pris", f"${user_diamonds['price'].mean():,.0f}")
                 
-                # Bästa fynd
+                
                 best_deal = recommendations.iloc[0]
                 st.success(f"""
                 **🏆 Ditt bästa fynd:**
@@ -490,7 +490,7 @@ if df is not None:
                 """)
             
             with col2:
-                # Visuell fördelning av dina alternativ
+                
                 fig_user = px.scatter(
                     user_diamonds.sample(min(1000, len(user_diamonds))),
                     x='carat',
@@ -501,7 +501,7 @@ if df is not None:
                     opacity=0.7
                 )
                 
-                # Highlighta top rekommendationer
+               
                 fig_user.add_scatter(
                     x=recommendations.head(5)['carat'],
                     y=recommendations.head(5)['price'],
@@ -519,10 +519,10 @@ if df is not None:
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
-        💎 Diamond Market Analyzer | Byggd med Streamlit och kärlek för data 📊
+        💎 Diamond Market Analyzer | Byggd med Streamlit
     </div>
     """, unsafe_allow_html=True)
 
 else:
     st.error("Kunde inte ladda data. Se till att diamonds.csv finns i samma mapp som appen.")
-    st.info("För att köra appen: `streamlit run app.py`")
+    st.info("För att köra appen: `streamlit run diamond_app.py`")
