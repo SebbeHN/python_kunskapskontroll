@@ -44,7 +44,7 @@ python_kunskapskontroll/
 ├── diamonds_analys/          # Data analysis & Streamlit app
 │   ├── diamonds_analysis.ipynb
 │   ├── diamonds.csv
-│   ├── streamlit_app.py
+│   ├── diamond_app.py
 │   └── .venv/
 ├── .gitignore
 └── README.md
