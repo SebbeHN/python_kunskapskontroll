@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Konfigurera sidan
+
 st.set_page_config(
     page_title="💎 Guldfynds Diamond Data Analysis",
     page_icon="💎",
@@ -15,12 +15,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cache data loading
+
 @st.cache_data
 def load_data():
     """Ladda och förbehandla diamantdata"""
     try:
-        # Ladda data och skapa en explicit kopia
+        
         df = pd.read_csv('diamonds.csv').copy()
         
         # Skapa scoring system
@@ -28,25 +28,25 @@ def load_data():
         color_scores = {'J': 1, 'I': 2, 'H': 3, 'G': 4, 'F': 5, 'E': 6, 'D': 7}
         clarity_scores = {'I1': 1, 'SI2': 2, 'SI1': 3, 'VS2': 4, 'VS1': 5, 'VVS2': 6, 'VVS1': 7, 'IF': 8}
         
-        # Använd .loc för säker tilldelning
+        
         df.loc[:, 'cut_score'] = df['cut'].map(cut_scores)
         df.loc[:, 'color_score'] = df['color'].map(color_scores)
         df.loc[:, 'clarity_score'] = df['clarity'].map(clarity_scores)
         
-        # Kvalitetspoäng (viktad)
+        
         df.loc[:, 'quality_score'] = (
             df['cut_score'] * 0.4 + 
             df['color_score'] * 0.3 + 
             df['clarity_score'] * 0.3
         ) / 7 * 5
         
-        # Beräkna pris per karat
+        
         df.loc[:, 'price_per_carat'] = df['price'] / df['carat']
         
-        # Value score
+       
         df.loc[:, 'value_score'] = df['quality_score'] / (df['price_per_carat'] / 1000)
         
-        # Prissegment
+        
         def price_segment(price):
             if price < 1000: return 'Budget (< $1K)'
             elif price < 2500: return 'Standard ($1K-$2.5K)'
@@ -61,31 +61,31 @@ def load_data():
         st.error("❌ diamonds.csv inte hittad! Lägg filen i samma mapp som appen.")
         return None
 
-# Ladda data
+
 df = load_data()
 
 if df is not None:
     
-    # HEADER med minimal business context
-    st.title("💎 Diamond Market Data Analysis")
+    
+    st.title("💎 Guldfynd Market Data Analysis")
     st.markdown("### *Comprehensive Analysis of Diamond Dataset*")
     
-    # Minimal business context
+    
     st.info("📋 **Context:** Analysis of diamond market data to understand pricing patterns, quality distributions, and value opportunities for potential market entry.")
     
-    # SIDEBAR - Filters och Navigation
+    
     st.sidebar.title("🔧 Analysis Controls")
     
-    # Navigation
+    
     page = st.sidebar.selectbox(
         "📍 Select Analysis:",
         ["🏠 Dataset Overview", "🔍 Interactive Explorer", "💰 Value Analysis", "🏆 Key Insights"]
     )
     
-    # Gemensamma filter
+   
     st.sidebar.subheader("🎛️ Data Filters")
     
-    # Budget filter
+    
     budget_range = st.sidebar.slider(
         "💰 Price Range ($)",
         min_value=int(df['price'].min()),
@@ -94,7 +94,7 @@ if df is not None:
         step=100
     )
     
-    # Karat filter
+    
     carat_range = st.sidebar.slider(
         "⚖️ Carat Range",
         min_value=float(df['carat'].min()),
@@ -103,7 +103,7 @@ if df is not None:
         step=0.1
     )
     
-    # Filtrera data
+    
     filtered_df = df[
         (df['price'] >= budget_range[0]) & 
         (df['price'] <= budget_range[1]) &
@@ -111,11 +111,11 @@ if df is not None:
         (df['carat'] <= carat_range[1])
     ]
     
-    # MAIN CONTENT baserat på vald sida
+    
     
     if page == "🏠 Dataset Overview":
         
-        # Key metrics i kolumner
+        
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -149,7 +149,7 @@ if df is not None:
                 f"{(avg_quality - df.loc[:, 'quality_score'].mean())/df.loc[:, 'quality_score'].mean()*100:+.1f}%" if len(filtered_df) != len(df) else None
             )
         
-        # Huvudvisualiseringar
+        
         col1, col2 = st.columns(2)
         
         with col1:
@@ -178,10 +178,10 @@ if df is not None:
             )
             st.plotly_chart(fig_segment, use_container_width=True)
         
-        # Korrelationsanalys
+        
         st.subheader("📈 Price Correlation Analysis")
         
-        # Beräkna korrelationer
+        
         corr_cols = ['carat', 'depth', 'table', 'x', 'y', 'z', 'quality_score', 'price']
         corr_matrix = filtered_df[corr_cols].corr()
         price_corr = corr_matrix['price'].drop('price').abs().sort_values(ascending=False)
@@ -200,7 +200,7 @@ if df is not None:
             st.write("• Depth/table have minimal price impact")
         
         with col2:
-            # Scatter plot av starkaste korrelationen
+            
             top_factor = price_corr.index[0]
             if top_factor in filtered_df.columns:
                 fig_scatter = px.scatter(
@@ -213,13 +213,13 @@ if df is not None:
                 )
                 st.plotly_chart(fig_scatter, use_container_width=True)
         
-        # Four Cs Analysis
+        
         st.subheader("💎 The Four Cs Analysis")
         
         four_c_col1, four_c_col2 = st.columns(2)
         
         with four_c_col1:
-            # Cut analysis
+            
             cut_analysis = filtered_df.groupby('cut', observed=False).agg({
                 'price': ['mean', 'count'],
                 'carat': 'mean'
@@ -232,7 +232,7 @@ if df is not None:
                 st.write(f"• **{cut}**: ${data['Avg_Price']:,.0f} avg price, {data['Count']} diamonds")
         
         with four_c_col2:
-            # Color analysis
+            
             color_analysis = filtered_df.groupby('color', observed=False).agg({
                 'price': 'mean',
                 'price_per_carat': 'mean'
@@ -248,7 +248,7 @@ if df is not None:
         st.title("🔍 Interactive Data Explorer")
         st.markdown("Explore relationships between different diamond characteristics")
         
-        # Kontroller för explorern
+        
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -269,7 +269,7 @@ if df is not None:
                 ['cut', 'color', 'clarity', 'price_segment', 'quality_score']
             )
         
-        # Skapa scatter plot
+        
         sample_size = min(5000, len(filtered_df))
         plot_df = filtered_df.sample(sample_size)
         
@@ -286,13 +286,13 @@ if df is not None:
         fig.update_layout(height=600)
         st.plotly_chart(fig, use_container_width=True)
         
-        # Kvalitetsfördelning
+        
         st.subheader("⭐ Quality Distribution Analysis")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Cut fördelning
+            
             cut_counts = filtered_df['cut'].value_counts()
             fig_cut = px.bar(
                 x=cut_counts.index,
@@ -305,7 +305,7 @@ if df is not None:
             st.plotly_chart(fig_cut, use_container_width=True)
         
         with col2:
-            # Color vs Clarity heatmap
+            
             heatmap_data = pd.crosstab(filtered_df['color'], filtered_df['clarity'])
             fig_heatmap = px.imshow(
                 heatmap_data.values,
@@ -322,7 +322,7 @@ if df is not None:
         st.title("💰 Value-for-Money Analysis")
         st.markdown("### *Find diamonds with the best value proposition*")
         
-        # Value Score Explanation
+        
         with st.expander("ℹ️ How Value Score Works"):
             st.markdown("""
             **Value Score Calculation:**
@@ -331,7 +331,7 @@ if df is not None:
             - Higher values indicate better quality relative to price
             """)
         
-        # Top value diamonds
+        
         st.subheader("🏆 Best Value Diamonds")
         
         col1, col2 = st.columns([2, 1])
@@ -341,7 +341,7 @@ if df is not None:
                 ['carat', 'cut', 'color', 'clarity', 'price', 'value_score', 'quality_score']
             ].round(2)
             
-            # Format for display
+            
             display_df = best_values.copy()
             display_df['Price'] = display_df['price'].apply(lambda x: f"${x:,.0f}")
             display_df['Value Score'] = display_df['value_score'].apply(lambda x: f"{x:.2f}")
@@ -351,7 +351,7 @@ if df is not None:
             st.dataframe(final_display, use_container_width=True)
         
         with col2:
-            # Value statistics
+            
             st.subheader("📊 Value Statistics")
             
             avg_value = filtered_df['value_score'].mean()
@@ -362,7 +362,7 @@ if df is not None:
             st.metric("Top 10% Threshold", f"{top_10_threshold:.2f}")
             st.metric("High Value Diamonds", f"{high_value_count:,}")
             
-            # Value insights
+            
             st.markdown("**💡 Value Insights:**")
             best_value_cut = best_values['cut'].mode().iloc[0] if len(best_values) > 0 else 'N/A'
             best_value_color = best_values['color'].mode().iloc[0] if len(best_values) > 0 else 'N/A'
@@ -371,7 +371,7 @@ if df is not None:
             st.write(f"• Most common color in top values: **{best_value_color}**")
             st.write(f"• Sweet spot size: **{best_values['carat'].mean():.2f} carats**")
         
-        # Value distribution
+        
         st.subheader("📈 Value Score Distribution")
         
         col1, col2 = st.columns(2)
@@ -392,7 +392,7 @@ if df is not None:
             st.plotly_chart(fig_value_dist, use_container_width=True)
         
         with col2:
-            # Value vs Price scatter
+            
             fig_value_price = px.scatter(
                 filtered_df.sample(min(3000, len(filtered_df))),
                 x='value_score',
@@ -409,10 +409,10 @@ if df is not None:
         st.title("🏆 Key Insights & Recommendations")
         st.markdown("### *Data-driven conclusions from the analysis*")
         
-        # Executive Summary
+        
         st.subheader("📋 Executive Summary")
         
-        # Calculate key statistics for insights
+        
         total_diamonds = len(df)
         avg_price = df['price'].mean()
         price_carat_corr = df['price'].corr(df['carat'])
@@ -438,12 +438,12 @@ if df is not None:
             - Quality scoring reveals undervalued diamonds
             """)
         
-        # Detailed insights in tabs
+        
         st.subheader("📈 Detailed Analysis")
         
         insight_tabs = st.tabs(["💰 Pricing", "💎 Quality", "📊 Market", "🎯 Opportunities"])
         
-        with insight_tabs[0]:  # Pricing insights
+        with insight_tabs[0]:  
             st.markdown("""
             **💰 Pricing Insights:**
             
@@ -463,7 +463,7 @@ if df is not None:
             - Value-conscious buyers should focus on cut optimization
             """)
         
-        with insight_tabs[1]:  # Quality insights
+        with insight_tabs[1]:  
             premium_cut_pct = (df['cut'] == 'Premium').mean() * 100
             ideal_cut_pct = (df['cut'] == 'Ideal').mean() * 100
             
@@ -486,7 +486,7 @@ if df is not None:
             - Investment grade stones typically VVS1+
             """)
         
-        with insight_tabs[2]:  # Market insights
+        with insight_tabs[2]:  
             budget_pct = (df['price'] < 1000).mean() * 100
             premium_pct = ((df['price'] >= 2500) & (df['price'] < 5000)).mean() * 100
             
@@ -509,7 +509,7 @@ if df is not None:
             - Brand and certification important for trust
             """)
         
-        with insight_tabs[3]:  # Opportunities
+        with insight_tabs[3]:  
             if 'value_score' in df.columns:
                 high_value_opportunities = len(df[df['value_score'] > df['value_score'].quantile(0.9)])
                 
@@ -535,7 +535,7 @@ if df is not None:
             - Provenance and documentation increasingly important
             """)
         
-        # Final recommendations
+        
         st.subheader("🎯 Final Recommendations")
         
         st.success("""
@@ -547,7 +547,7 @@ if df is not None:
         5. **Quality scoring** - Use data-driven approaches to identify value
         """)
     
-    # FOOTER
+    
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666;'>
