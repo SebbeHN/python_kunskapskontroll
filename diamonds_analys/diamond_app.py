@@ -16,50 +16,54 @@ st.set_page_config(
 )
 
 
+import os
+import pandas as pd
+import streamlit as st
+
 @st.cache_data
 def load_data():
     """Ladda och förbehandla diamantdata"""
+
+    # Hämta korrekt sökväg oavsett om appen körs lokalt eller i molnet
+    current_dir = os.path.dirname(__file__)
+    csv_path = os.path.join(current_dir, 'diamonds.csv')
+
     try:
-        
-        df = pd.read_csv('diamonds.csv').copy()
-        
+        df = pd.read_csv(csv_path).copy()
+
         # Skapa scoring system
         cut_scores = {'Fair': 1, 'Good': 2, 'Very Good': 3, 'Premium': 4, 'Ideal': 5}
         color_scores = {'J': 1, 'I': 2, 'H': 3, 'G': 4, 'F': 5, 'E': 6, 'D': 7}
         clarity_scores = {'I1': 1, 'SI2': 2, 'SI1': 3, 'VS2': 4, 'VS1': 5, 'VVS2': 6, 'VVS1': 7, 'IF': 8}
-        
-        
-        df.loc[:, 'cut_score'] = df['cut'].map(cut_scores)
-        df.loc[:, 'color_score'] = df['color'].map(color_scores)
-        df.loc[:, 'clarity_score'] = df['clarity'].map(clarity_scores)
-        
-        
-        df.loc[:, 'quality_score'] = (
-            df['cut_score'] * 0.4 + 
-            df['color_score'] * 0.3 + 
+
+        df['cut_score'] = df['cut'].map(cut_scores)
+        df['color_score'] = df['color'].map(color_scores)
+        df['clarity_score'] = df['clarity'].map(clarity_scores)
+
+        df['quality_score'] = (
+            df['cut_score'] * 0.4 +
+            df['color_score'] * 0.3 +
             df['clarity_score'] * 0.3
         ) / 7 * 5
-        
-        
-        df.loc[:, 'price_per_carat'] = df['price'] / df['carat']
-        
-       
-        df.loc[:, 'value_score'] = df['quality_score'] / (df['price_per_carat'] / 1000)
-        
-        
+
+        df['price_per_carat'] = df['price'] / df['carat']
+        df['value_score'] = df['quality_score'] / (df['price_per_carat'] / 1000)
+
         def price_segment(price):
             if price < 1000: return 'Budget (< $1K)'
             elif price < 2500: return 'Standard ($1K-$2.5K)'
             elif price < 5000: return 'Premium ($2.5K-$5K)'
             elif price < 10000: return 'Luxury ($5K-$10K)'
             else: return 'Ultra-Luxury (> $10K)'
-        
-        df.loc[:, 'price_segment'] = df['price'].apply(price_segment)
-        
+
+        df['price_segment'] = df['price'].apply(price_segment)
+
         return df
+
     except FileNotFoundError:
-        st.error("❌ diamonds.csv inte hittad! Lägg filen i samma mapp som appen.")
+        st.error(f"❌ diamonds.csv inte hittad i {csv_path}")
         return None
+
 
 
 df = load_data()
