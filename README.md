@@ -39,7 +39,7 @@ An interactive **Streamlit application** has also been developed to present the 
 ```
 python_kunskapskontroll/
 ├── teori_del_01/             # Theoretical questions & exercises
-│   ├── theoretical_questions.ipynb
+│   ├── del1_teoretiska_fragor.ipynb
 │   └── .venv/
 ├── diamonds_analys/          # Data analysis & Streamlit app
 │   ├── diamonds_analysis.ipynb
