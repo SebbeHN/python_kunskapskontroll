@@ -64,7 +64,7 @@ streamlit run diamond_app.py
 
 ---
 
-## Streamalit deployed website
+## Streamlit deployed website
 
 https://pythonkunskapskontroll-diamantanalys.streamlit.app/
 
