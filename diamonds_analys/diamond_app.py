@@ -7,8 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-st.write("✅ matplotlib version:", matplotlib.__version__)
-st.write("✅ seaborn version:", seaborn.__version__)
+
 
 
 st.set_page_config(
