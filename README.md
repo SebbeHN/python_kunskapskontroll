@@ -64,6 +64,12 @@ streamlit run diamond_app.py
 
 ---
 
+## Stremalit deployed website
+
+https://pythonkunskapskontroll-diamantanalys.streamlit.app/
+
+---
+
 ## 🧠 About This Project
 
 This knowledge assessment is designed to apply practical Python skills and prepare for the upcoming AI course. 
