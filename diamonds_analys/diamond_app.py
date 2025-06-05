@@ -23,7 +23,8 @@ def load_data():
     """Ladda och förbehandla diamantdata"""
     try:
         
-        df = pd.read_csv('diamonds.csv').copy()
+        df = pd.read_csv('diamonds_analys/diamonds.csv').copy()
+
         
         # Skapa scoring system
         cut_scores = {'Fair': 1, 'Good': 2, 'Very Good': 3, 'Premium': 4, 'Ideal': 5}
